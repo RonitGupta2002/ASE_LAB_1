@@ -1,4 +1,4 @@
-# florian
+# Florian Menzel
 
 <!-- Copy this file to <firstname>.md (lowercase), e.g. anna.md, and fill it in.
      Put your picture into images/<firstname>.jpg (or .png/.svg/.webp).

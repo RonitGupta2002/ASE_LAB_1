@@ -1,4 +1,4 @@
-# Ashmit
+# Ashmit Goel
 
 ## Study background
 M.Sc. Computer Science, 1st semester, Universität Paderborn.
