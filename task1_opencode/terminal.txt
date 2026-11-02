@@ -1,0 +1,69 @@
+onit@Ronits-MacBook lab1 %  source "/Users/ronit/Desktop/Winter Sem 26/Agentic Softwar
+e Engineering/lab1/.venv/bin/activate"
+(agentic-se-lab1) ronit@Ronits-MacBook lab1 % echo $UPB_AI_GATEWAY_KEY
+...........................
+(agentic-se-lab1) ronit@Ronits-MacBook lab1 % mkdir -p ~/hello-agent && cd ~/hello-agent
+(agentic-se-lab1) ronit@Ronits-MacBook hello-agent % cd ..
+(agentic-se-lab1) ronit@Ronits-MacBook ~ % ls
+Applications    Downloads       Music           ase-entry-prep
+Desktop         Library         Pictures        hello-agent
+Documents       Movies          Public
+(agentic-se-lab1) ronit@Ronits-MacBook ~ % cd Desktop 
+(agentic-se-lab1) ronit@Ronits-MacBook Desktop % ls
+Brave Browser.app               Paderborn University
+German                          Screenshots
+Google Chrome.app               Telegram.app
+Important Documents             Visual Studio Code.app
+Karlstraße 26 Paderborn         Winter Sem 26
+Master_s - Germany
+(agentic-se-lab1) ronit@Ronits-MacBook Desktop % cd Winter\ Sem\ 26 
+(agentic-se-lab1) ronit@Ronits-MacBook Winter Sem 26 % cd Agentic\ Software\ Engineering
+(agentic-se-lab1) ronit@Ronits-MacBook Agentic Software Engineering % ls
+ASE Entry Test  Exercise        Notes           lab1            lab1_extra
+(agentic-se-lab1) ronit@Ronits-MacBook Agentic Software Engineering % cd lab1
+(agentic-se-lab1) ronit@Ronits-MacBook lab1 % ls
+Lab1_Sheet.pdf          logs                    task2_own_agent
+README.md               pyproject.toml          task3_rag
+common                  requirements.txt        task4_tools
+hello_agent             task1_opencode          uv.lock
+(agentic-se-lab1) ronit@Ronits-MacBook lab1 % cd hello_agent 
+(agentic-se-lab1) ronit@Ronits-MacBook hello_agent % cp ../task1_opencode/opencode.json .
+(agentic-se-lab1) ronit@Ronits-MacBook hello_agent % opencode
+                                   ▄     
+  █▀▀█ █▀▀█ █▀▀█ █▀▀▄ █▀▀▀ █▀▀█ █▀▀█ █▀▀█
+  █  █ █  █ █▀▀▀ █  █ █    █  █ █  █ █▀▀▀
+  ▀▀▀▀ █▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀
+
+  Session   Create and run hello.py greeting script
+  Continue  opencode -s ses_e63c66b16ffemrVmN6lp9D6lbE
+
+(agentic-se-lab1) ronit@Ronits-MacBook hello_agent % cd ..
+(agentic-se-lab1) ronit@Ronits-MacBook lab1 % cd task1_opencode 
+(agentic-se-lab1) ronit@Ronits-MacBook task1_opencode % ls content content/images
+content:
+_template.md    florian.md      narayan.md      vaibhav.md
+ashmit.md       images          ronit.md
+
+content/images:
+ashmit.jpg      florian.jpg     narayan.jpeg    ronit.jpg       vaibhav.jpg
+(agentic-se-lab1) ronit@Ronits-MacBook task1_opencode % mkdir -p site conversation
+(agentic-se-lab1) ronit@Ronits-MacBook task1_opencode % opencode
+                                   ▄     
+  █▀▀█ █▀▀█ █▀▀█ █▀▀▄ █▀▀▀ █▀▀█ █▀▀█ █▀▀█
+  █  █ █  █ █▀▀▀ █  █ █    █  █ █  █ █▀▀▀
+  ▀▀▀▀ █▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀
+
+  Session   Greeting
+  Continue  opencode -s ses_e63bcacf4fferlb3pMUHtdR7eK
+
+(agentic-se-lab1) ronit@Ronits-MacBook task1_opencode % python check_site.py site/index.html --content content
+[PASS] file size: 485 KB
+[PASS] no external resources: everything is inside the file
+[PASS] viewport meta tag: present
+[PASS] responsive CSS: width-based media query found
+[PASS] day/night toggle: button + theme switching script found
+[PASS] embedded images: 5 images, all embedded as data URIs
+[PASS] all members present: all 5 members mentioned
+7/7 checks passed. All good!
+(agentic-se-lab1) ronit@Ronits-MacBook task1_opencode % open site/index.html
+(agentic-se-lab1) ronit@Ronits-MacBook task1_opencode % 
