@@ -86,7 +86,7 @@ python check_site.py site/index.html --content content
 ### 5. View the website 
 In the terminal from within the folder task1_opencode
 ```bash
-open site/index.html        # macOS; on Linux use xdg-open
+open site/index.html       
 ```
 Try the day/night toggle and resize the window.
 
@@ -99,4 +99,4 @@ Two sessions namely session_01.md and session_02.md are saved which have all the
 | `instructions.md` | Original lab instructions |
 | `common/` | Gateway client, site checker, image embedding helper |
 | `task1_opencode/` | OpenCode config, member content, generated website, session exports |
-| `task2_own_agent/`, `task3_rag/`, `task4_tools/` | Material for later tasks |
+| `task2_own_agent/`, `task3_rag/`, `task4_tools/` | |
