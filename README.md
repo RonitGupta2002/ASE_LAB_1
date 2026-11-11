@@ -17,6 +17,7 @@ The original lab instructions are kept in [`instructions.md`](instructions.md).
 |---|---|---|
 | 0 | Gateway access and environment setup | Done |
 | 1 | OpenCode setup and team website | Done |
+| 4 | Tools for agents ([task4_tools/README.md](task4_tools/README.md)) | Done |
 
 ## Prerequisites
 
@@ -92,6 +93,36 @@ Try the day/night toggle and resize the window.
 
 ### 6. Save the session
 Two sessions namely session_01.md and session_02.md are saved which have all the detailed related to the prompt as well as opencode stats. These are located in task1_opencode/conversation/
+
+## Task 4 – Tools for agents
+
+This task implements a tool-using agent for a sandboxed repository. The task description and implementation notes are documented in [`task4_tools/README.md`](task4_tools/README.md).
+
+### 1. Reset the workspace
+```bash
+uv run python task4_tools/reset_workspace.py
+```
+
+### 2. Run the public tests
+```bash
+uv run pytest task4_tools/tests -v
+```
+
+### 3. Run the mock-agent validation
+```bash
+uv run python task4_tools/agent.py --mock
+```
+
+### 4. Run the real agent loop
+```bash
+uv run python task4_tools/reset_workspace.py
+uv run python task4_tools/agent.py
+```
+
+### 5. Capture the workspace diff
+```bash
+git -C task4_tools/workspace diff > task4_tools/final.diff
+```
 
 ## Repository structure
 | Path | Content |

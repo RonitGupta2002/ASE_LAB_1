@@ -1,5 +1,7 @@
 # Task 4 – Tools for agents
 
+This task is part of the team project. See the project root [README.md](../README.md) for the overall lab overview and group details.
+
 Read the task description on the lab sheet first.
 
 ## What's in this folder
