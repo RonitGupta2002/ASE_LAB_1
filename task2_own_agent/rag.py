@@ -2,6 +2,7 @@
 import os
 import re
 from dataclasses import dataclass
+from datetime import datetime
 
 import numpy as np
 from pathlib import Path
@@ -24,34 +25,95 @@ class Chunk:
 
 
 
-_STYLE_GUIDE_FOLDER : Path = Path(__file__).resolve().parent / "style_guide"
-_FILE_EXTENSION : str = "md"
+_TASK_FOLDER        : Path = Path(__file__).resolve().parent
+_STYLE_GUIDE_FOLDER : Path = _TASK_FOLDER / "style_guide"
+_FILE_EXTENSION     : str = "md"
 
 _DOCUMENT_ID_REGEX : re.Pattern = re.compile(r"SG-[0-9]+")
 
 _ENCODING : tiktoken.Encoding = tiktoken.get_encoding("cl100k_base")
 
 
+MAX_TOKENS = 100
+OVERLAP_TOKENS = 50
+CHUNK_LIMIT = MAX_TOKENS - OVERLAP_TOKENS
+SEPARATORS = ["\n\n", "\n", ". ", " ", ""]
+
+
 
 rag_chunks : list[Chunk] = []
 
 llm_client : LLMClient = LLMClient(model=os.environ["LAB_FALLBACK_MODEL"],
-                                   embedding_model=os.environ["LAB_EMBEDDING_MODEL"])
+                                   embedding_model=os.environ["LAB_EMBEDDING_MODEL"],
+                                   log_path=_TASK_FOLDER / "logs" / f"run{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.jsonl")
 
+
+
+def split_recursive(value: str, remaining_separators: list[str]) -> list[str]:
+    if count_tokens(value) <= CHUNK_LIMIT:
+        return [value]
+
+    if not remaining_separators:
+        tokens = _ENCODING.encode(value)
+        return [
+            _ENCODING.decode(tokens[i : i + CHUNK_LIMIT])
+            for i in range(0, len(tokens), CHUNK_LIMIT)
+        ]
+
+    separator = remaining_separators[0]
+    if not separator:
+        tokens = _ENCODING.encode(value)
+        return [
+            _ENCODING.decode(tokens[i : i + CHUNK_LIMIT])
+            for i in range(0, len(tokens), CHUNK_LIMIT)
+        ]
+
+    if separator not in value:
+        return split_recursive(value, remaining_separators[1:])
+
+    parts = value.split(separator)
+    units = [
+        part + (separator if index < len(parts) - 1 else "")
+        for index, part in enumerate(parts)
+    ]
+
+    chunks: list[str] = []
+    current = ""
+
+    for unit in units:
+        if count_tokens(unit) > CHUNK_LIMIT:
+            subchunks = split_recursive(unit, remaining_separators[1:])
+        else:
+            subchunks = [unit]
+
+        for subchunk in subchunks:
+            if current and count_tokens(current + subchunk) > CHUNK_LIMIT:
+                chunks.append(current)
+                current = ""
+            current += subchunk
+
+    if current:
+        chunks.append(current)
+
+    return chunks
 
 
 def _create_chunks_overlay(text : str) -> list[str]:
-    _CHUNK_SIZE : int = 50
-    _CHUNK_OVERLAP : int = 10
+    if not text:
+        return []
 
-    result : list[str] = []
+    base_chunks = split_recursive(text, SEPARATORS)
+    chunks: list[str] = []
 
-    token_ids = _ENCODING.encode(text)
-    step      = _CHUNK_SIZE - _CHUNK_OVERLAP
-    starts    = np.arange(0, len(token_ids), step)
-    result    = [_ENCODING.decode(token_ids[start : start + _CHUNK_SIZE]) for start in starts]
+    for index, chunk in enumerate(base_chunks):
+        prefix = ""
+        if index > 0 and OVERLAP_TOKENS:
+            previous_tokens = _ENCODING.encode(base_chunks[index - 1])
+            prefix = _ENCODING.decode(previous_tokens[-OVERLAP_TOKENS:])
 
-    return result
+        chunks.append(prefix + chunk)
+
+    return chunks
 
 
 def create_rag() -> None:
@@ -76,6 +138,8 @@ def create_rag() -> None:
         ]
 
         rag_chunks.extend(chunk_items)
+
+    print("RAG created")
 
 
 def search(query: str, k: int) -> list[Chunk]:
