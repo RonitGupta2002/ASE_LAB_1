@@ -1,0 +1,68 @@
+@startuml overview
+title Team Website Generation Workflow
+' skinparam ConditionEndStyle hline
+
+
+
+|RAG|
+|Agent|
+:Parse arguments;
+|RAG|
+group "create_rag()"
+    while (for each style guide file)
+        :Extract document\nID from filename;
+        :Create structure-aware\nprovisional chunks;
+        :Recombine current chunk\nwith overlap of previous\nchunk;
+    endwhile
+end group
+
+|Agent|
+#LightBlue:To LLM:\nBuild team website; <<output>>
+#LightGoldenRodYellow:From LLM:\nReceive response; <<input>>
+while (Not reach max steps)
+    if (Valid JSON response) then (true)
+        if (search_style_guide) then (true)
+            |RAG|
+            group "search(query, 5)"
+                :search with fix top-k;
+            end group
+            |Agent|
+            #LightBlue:To LLM:\nSend chunks; <<output>>
+        elseif (read_profiles) then (true)
+            #LightBlue:To LLM:\nSend all profiles; <<output>>
+        elseif (finish) then (true)
+            if (Valid state) then (true)
+                :Print summary;
+                :Ask human for feedback; <<output>>
+                if (Received feedback) then (true)
+                    :Reset loop steps;
+                    #LightGreen:To LLM:\nSend feedback; <<output>>
+                else (false)
+                    stop
+                endif
+            else (false)
+                #LightPink:To LLM:\nNot allowed to call finish; <<output>>
+            endif
+        else (false)
+            #LightPink:To LLM:\nBad Action; <<output>>
+        endif
+    elseif (Contains HTML block) then (true)
+        :Split HTML and JSON code;
+        if (Valid JSON) then (true)
+            :Replace image\nplaceholders in HTML;
+            :Run check_site with HTML;
+            #LightBlue:To LLM:\nSend results of checker; <<output>>
+        else (false)
+            #LightPink:To LLM:\nBad JSON; <<output>>
+        endif
+    else (false)
+        #LightPink:To LLM:\nBad JSON; <<output>>
+    endif
+    #LightGoldenRodYellow:From LLM:\nReceive response; <<input>>
+endwhile
+stop
+
+
+
+
+@enduml
