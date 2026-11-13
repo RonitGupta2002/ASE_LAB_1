@@ -17,7 +17,8 @@ The original lab instructions are kept in [`instructions.md`](instructions.md).
 |---|---|---|
 | 0 | Gateway access and environment setup | Done |
 | 1 | OpenCode setup and team website | Done |
-| 3 | RAG retrieval experiments and evaluation ([report](task3_rag/REPORT.md)) | Done |
+| 2 | Custom JSON-action coding agent with style-guide RAG ([`task2_own_agent/`](task2_own_agent/)) | Done |
+| 3 | RAG retrieval experiments and evaluation ([`task3_rag/REPORT.md`](task3_rag/REPORT.md)) | Done |
 | 4 | Secure tools for agents ([task4_tools/README.md](task4_tools/README.md)) | Done |
 
 ## Prerequisites
@@ -126,9 +127,72 @@ The agent attempts to parse each response as JSON and checks that it has the exp
 
 ## Task 3 – Retrieval-augmented generation
 
-We compared BM25, dense retrieval, hybrid retrieval, and hybrid retrieval with reranking on the PaderQueue dataset. The report evaluates retrieval quality by question category, end-to-end answer quality, cost, and latency. It recommends R4 hybrid retrieval as the best quality/latency trade-off; R5 reranking gives a modest quality improvement at substantially higher retrieval latency.
+We compared BM25, dense retrieval, hybrid retrieval, and hybrid retrieval with cross-encoder reranking across the 932-document **PaderQueue** corpus (`task3_rag/data/corpus.jsonl`), evaluating retrieval quality at `k=5` across 150 development questions (120 answerable across `identifier`, `paraphrase`, `multi-hop`, and `version`, plus 30 `unanswerable`) and generating predictions for the 100 test questions (`task3_rag/data/questions_test.jsonl`)[cite: 3, 7, 19, 20]. Each chunk is prefixed with its document metadata header (`[type | title | version]`)[cite: 3, 14].
 
-See [`task3_rag/README.md`](task3_rag/README.md) for the dataset and evaluation workflow, and [`task3_rag/REPORT.md`](task3_rag/REPORT.md) for results and analysis.
+### Configurations & Summary Results
+- **R1 (`r1_bm25`):** `BM25Okapi` with identifier-aware tokenization on 600-character recursive chunks — Overall Recall@5: **0.533**, Precision@5: **0.558** (`identifier` Recall@5: **0.900**, latency: **15.22 ms/query**)[cite: 3, 19].
+- **R2 (`r2_fixed`):** Fixed-size 600-character chunks (overlap 100) + local `sentence-transformers/all-MiniLM-L6-v2` embeddings — Overall Recall@5: **0.342**, Precision@5: **0.266** (latency: **0.38 ms/query**)[cite: 3, 19].
+- **R3 (`r3_s300`, `r3_s600`, `r3_s1200`):** Recursive markdown/paragraph/sentence chunking + local `all-MiniLM-L6-v2` embeddings across three chunk sizes (overlap 100)[cite: 7, 19]:
+  - `300` chars (`r3_s300`): Recall@5 **0.467**, Precision@5 **0.385**, ~379 top-5 context tokens/query, **0.75 ms/query**[cite: 19].
+  - `600` chars (`r3_s600`): Recall@5 **0.350**, Precision@5 **0.260**, ~618 top-5 context tokens/query, **0.34 ms/query**[cite: 19].
+  - `1200` chars (`r3_s1200`): Recall@5 **0.354**, Precision@5 **0.275**, ~756 top-5 context tokens/query, **0.21 ms/query**[cite: 19].
+- **R4 (`r4_hybrid`):** Equal-weight (`alpha=0.5`) min-max normalized score fusion of R1 and R3-600 — Overall Recall@5: **0.583**, Precision@5: **0.561**, retrieval latency: **0.31 ms/query**, 50-question Judge Correctness: **0.660** (Faithfulness: **0.957**)[cite: 19]. **Recommended for interactive production deployment**[cite: 19, 20].
+- **R5 (`r5_rerank`):** R4 top-25 candidates re-ranked with `cross-encoder/ms-marco-MiniLM-L-6-v2` — Overall Recall@5: **0.613**, Precision@5: **0.599**, retrieval latency: **2,659.38 ms/query**, 50-question Judge Correctness: **0.710** (Faithfulness: **0.923**)[cite: 3, 19].
+
+See [`task3_rag/README.md`](task3_rag/README.md) for the dataset specification and [`task3_rag/REPORT.md`](task3_rag/REPORT.md) for the full experimental report, 10-question manual judge audit, 5-question failure analysis, and deployment recommendation[cite: 3, 7, 19, 20].
+
+### Steps to Run Task 3 and Reproduce All Results
+
+Run all commands from the repository root[cite: 20]:
+
+#### 1. Install local embedding and reranking dependencies
+```bash
+uv sync --extra local
+```
+
+#### 2. Set the UPB AI Gateway environment variables
+```bash
+export UPB_AI_GATEWAY_KEY="your-key"
+export LAB_CHAT_MODEL="openai.gpt-6-luna"
+export LAB_EMBEDDING_MODEL="kiconnect.qwen3-embedding-8b"
+```
+
+#### 3. Run all retrieval experiments (R1–R5), chunk-size ablations, and cost/latency logging
+```bash
+uv run python task3_rag/pipeline.py
+```
+This script indexes the corpus, caches embeddings in `task3_rag/.cache/`, evaluates Context Recall@5 and Context Precision@5 overall and per category using `evaluate.py`, and writes all outputs to `task3_rag/results/`[cite: 1, 3, 13, 19]:
+- Ranked retrieval outputs: `retrieval_r1_bm25.jsonl`, `retrieval_r2_fixed.jsonl`, `retrieval_r3_s300.jsonl`, `retrieval_r3_s600.jsonl`, `retrieval_r3_s1200.jsonl`, `retrieval_r4_hybrid.jsonl`, `retrieval_r5_rerank.jsonl`[cite: 3, 19]
+- Evaluation metrics: `metrics_r1_bm25.json`, `metrics_r2_fixed.json`, `metrics_r3_s300.json`, `metrics_r3_s600.json`, `metrics_r3_s1200.json`, `metrics_r4_hybrid.json`, `metrics_r5_rerank.json`[cite: 1, 3, 19]
+- Indexing time, query latency, and context token counts: `cost_latency.json`[cite: 19]
+
+To run `evaluate.py` directly on any individual retrieval file[cite: 1, 3]:
+```bash
+uv run python task3_rag/evaluate.py task3_rag/results/retrieval_r4_hybrid.jsonl --k 5 --json task3_rag/results/metrics_r4_hybrid.json
+uv run python task3_rag/evaluate.py task3_rag/results/retrieval_r5_rerank.jsonl --k 5 --json task3_rag/results/metrics_r5_rerank.json
+```
+
+#### 4. Generate end-to-end answers on the 50-question stratified dev sample (R4 & R5)
+```bash
+uv run python task3_rag/generate_answers.py --config r4
+uv run python task3_rag/generate_answers.py --config r5
+```
+- Saves generated answers and prompt contexts to `task3_rag/results/answers_r4.jsonl` and `task3_rag/results/answers_r5.jsonl`[cite: 2, 3, 19].
+- Logs gateway token counts, latency, and API costs to `logs/gen_r4.jsonl` and `logs/gen_r5.jsonl`[cite: 5, 19].
+
+#### 5. Evaluate end-to-end answers with the LLM Judge (`judge.py`)
+```bash
+uv run python task3_rag/judge.py task3_rag/results/answers_r4.jsonl --sample 50 --model openai.gpt-6-luna --local-embeddings --out task3_rag/results/judge_r4.jsonl
+uv run python task3_rag/judge.py task3_rag/results/answers_r5.jsonl --sample 50 --model openai.gpt-6-luna --local-embeddings --out task3_rag/results/judge_r5.jsonl
+```
+- Saves per-question and per-category abstention rates, faithfulness, answer relevance, and correctness scores to `task3_rag/results/judge_r4.jsonl` and `task3_rag/results/judge_r5.jsonl`[cite: 2, 3, 19].
+- Logs judge LLM calls and costs to `logs/judge_answers_r4.jsonl` and `logs/judge_answers_r5.jsonl`[cite: 2, 19].
+
+#### 6. Generate final test set predictions (`task3_rag/predictions_test.jsonl`)
+```bash
+uv run python task3_rag/generate_answers.py --config r5 --test
+```
+- Generates answers and top-5 deduplicated `retrieved_doc_ids` for all 100 test questions in `task3_rag/data/questions_test.jsonl` and writes `task3_rag/predictions_test.jsonl`[cite: 3, 7, 17].
 
 ## Task 4 – Tools for agents
 
@@ -176,5 +240,5 @@ git -C task4_tools/workspace diff > task4_tools/final.diff
 | `common/` | Gateway client, site checker, image embedding helper |
 | `task1_opencode/` | OpenCode config, member content, generated website, session exports |
 | `task2_own_agent/`| Generated website, successful run log, screenshot of a successful run, overview diagram |
-| `task3_rag/` | PaderQueue dataset, RAG experiments, evaluation results, and report |
+| `task3_rag/` | PaderQueue dataset, RAG pipeline (`pipeline.py`, `generate_answers.py`), evaluation scripts (`evaluate.py`, `judge.py`), results (`results/`), experimental report (`REPORT.md`), and test predictions (`predictions_test.jsonl`) |
 | `task4_tools/` | Sandboxed TinyLedger agent, tool implementation, tests, run logs, and threat summary |
