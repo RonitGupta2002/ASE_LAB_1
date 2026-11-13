@@ -17,7 +17,8 @@ The original lab instructions are kept in [`instructions.md`](instructions.md).
 |---|---|---|
 | 0 | Gateway access and environment setup | Done |
 | 1 | OpenCode setup and team website | Done |
-| 4 | Tools for agents ([task4_tools/README.md](task4_tools/README.md)) | Done |
+| 3 | RAG retrieval experiments and evaluation ([report](task3_rag/REPORT.md)) | Done |
+| 4 | Secure tools for agents ([task4_tools/README.md](task4_tools/README.md)) | Done |
 
 ## Prerequisites
 
@@ -123,11 +124,18 @@ The agent attempts to parse each response as JSON and checks that it has the exp
 
 
 
+## Task 3 – Retrieval-augmented generation
+
+We compared BM25, dense retrieval, hybrid retrieval, and hybrid retrieval with reranking on the PaderQueue dataset. The report evaluates retrieval quality by question category, end-to-end answer quality, cost, and latency. It recommends R4 hybrid retrieval as the best quality/latency trade-off; R5 reranking gives a modest quality improvement at substantially higher retrieval latency.
+
+See [`task3_rag/README.md`](task3_rag/README.md) for the dataset and evaluation workflow, and [`task3_rag/REPORT.md`](task3_rag/REPORT.md) for results and analysis.
+
 ## Task 4 – Tools for agents
 
-This task implements a tool-using agent for a sandboxed repository. The task description and implementation notes are documented in [`task4_tools/README.md`](task4_tools/README.md).
+This task implements a tool-using agent for a sandboxed TinyLedger repository. The tool layer validates arguments and confines reads, writes, and subprocesses to the allowed workspace; the agent uses it to fix the issue without modifying tests. See [`task4_tools/README.md`](task4_tools/README.md) for the specification and workflow, and [`task4_tools/Threats.md`](task4_tools/Threats.md) for the threat-to-control summary.
 
 ### 1. Reset the workspace
+
 ```bash
 uv run python task4_tools/reset_workspace.py
 ```
@@ -168,4 +176,5 @@ git -C task4_tools/workspace diff > task4_tools/final.diff
 | `common/` | Gateway client, site checker, image embedding helper |
 | `task1_opencode/` | OpenCode config, member content, generated website, session exports |
 | `task2_own_agent/`| Generated website, successful run log, screenshot of a successful run, overview diagram |
-| `task3_rag/`, `task4_tools/` | |
+| `task3_rag/` | PaderQueue dataset, RAG experiments, evaluation results, and report |
+| `task4_tools/` | Sandboxed TinyLedger agent, tool implementation, tests, run logs, and threat summary |
